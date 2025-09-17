@@ -255,5 +255,3 @@ export const roomsData = [
 		image: '/images/rooms/room3.jpg',
 	},
 ];
-
-module.exports = roomsData;
