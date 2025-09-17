@@ -3,36 +3,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 import Room from '../models/room.js';
 
-async function importRooms() {
-	const possiblePaths = [
-		'/app/frontend/src/data/rooms-data.js',
-		'../../../frontend/src/data/rooms-data.js',
-	];
+if (!process.env.ENABLE_SEED || process.env.ENABLE_SEED !== 'true') {
+	console.log('Seed disabled. Set ENABLE_SEED=true in .env to seed rooms.');
+	process.exit(0);
+}
+
+async function seedRooms() {
+	const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/baikal_hotel';
+	await mongoose.connect(mongoUri);
+	console.log('✅ Connected to MongoDB for seeding');
 
 	let rooms = [];
-	for (const p of possiblePaths) {
-		try {
-			const mod = await import(p);
-			rooms = mod.default || mod.rooms || mod.roomsData || [];
-			if (rooms && rooms.length) {
-				console.log('Imported rooms from', p);
-				break;
-			}
-		} catch (err) {
-			// console.warn('import error for', p, err.message);
-		}
+	try {
+		const mod = await import('../data/rooms.js');
+		rooms = mod.default || mod.roomsData || [];
+	} catch (err) {
+		console.error('❌ Failed to import rooms data:', err.message);
+		process.exit(1);
 	}
 
 	if (!rooms.length) {
-		console.warn(
-			'No rooms data found in frontend. Please check path and export in frontend/src/data/rooms-data.js',
-		);
-		return;
+		console.warn('❌ No rooms data found. Check backend/data/rooms.js');
+		process.exit(1);
 	}
-
-	const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/baikal_hotel';
-	await mongoose.connect(mongoUri);
-	console.log('Mongo connected for seeding');
 
 	await Room.deleteMany({});
 	const created = await Room.create(
@@ -54,11 +47,13 @@ async function importRooms() {
 				: [],
 		})),
 	);
-	console.log('Seeded rooms:', created.length);
+
+	console.log(`✅ Seed completed. Rooms created: ${created.length}`);
 	await mongoose.disconnect();
+	process.exit(0);
 }
 
-importRooms().catch((err) => {
-	console.error('Seed error:', err);
+seedRooms().catch((err) => {
+	console.error('❌ Seed error:', err);
 	process.exit(1);
 });
