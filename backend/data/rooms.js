@@ -1,4 +1,4 @@
-export const roomsData = [
+const roomsData = [
 	// Стандарт
 	{
 		id: 1,
@@ -255,3 +255,5 @@ export const roomsData = [
 		image: '/images/rooms/room3.jpg',
 	},
 ];
+
+export default roomsData;

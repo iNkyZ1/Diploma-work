@@ -16,7 +16,7 @@ async function seedRooms() {
 	let rooms = [];
 	try {
 		const mod = await import('../data/rooms.js');
-		rooms = mod.roomsData || mod.default || [];
+		rooms = mod.default || [];
 	} catch (err) {
 		console.error('❌ Failed to import rooms data:', err.message);
 		process.exit(1);
